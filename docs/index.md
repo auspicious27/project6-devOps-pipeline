@@ -164,8 +164,8 @@ This pipeline is perfect for:
 
 For questions, issues, or contributions:
 
-- **Issues**: [GitHub Issues](https://github.com/your-org/devops-pipeline/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/devops-pipeline/discussions)
+- **Issues**: [GitHub Issues](https://github.com/auspicious27/project6-devOps-pipeline/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/auspicious27/project6-devOps-pipeline/discussions)
 - **Documentation**: This site
 
 ## 📄 License

@@ -684,7 +684,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/auspicious27/Project6-testpurpose.git
+    repoURL: https://github.com/auspicious27/project6-devOps-pipeline.git
     targetRevision: HEAD
     path: environments/dev
   destination:

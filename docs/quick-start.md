@@ -13,8 +13,8 @@ Get your DevOps Pipeline up and running in minutes with this quick start guide.
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/devops-pipeline.git
-cd devops-pipeline
+git clone https://github.com/auspicious27/project6-devOps-pipeline.git
+cd project6-devOps-pipeline
 
 # Run the complete setup
 chmod +x setup_prereqs.sh bootstrap_cluster.sh deploy_pipeline.sh check_env.sh
@@ -123,5 +123,5 @@ For production deployment:
 ## Support
 
 - **Documentation**: This site
-- **Issues**: [GitHub Issues](https://github.com/your-org/devops-pipeline/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/devops-pipeline/discussions)
+- **Issues**: [GitHub Issues](https://github.com/auspicious27/project6-devOps-pipeline/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/auspicious27/project6-devOps-pipeline/discussions)

@@ -18,7 +18,7 @@ chmod +x deploy_pipeline.sh && ./deploy_pipeline.sh
 chmod +x check_env.sh && ./check_env.sh
 ```
 
-**Then:** Open ports 30080-30085 and 30500 in AWS Security Group and access via `http://YOUR_IP:PORT`
+**Then:** Open ports 30080-30085 in AWS Security Group and access via `http://YOUR_IP:PORT`
 
 ## 📋 Table of Contents
 
@@ -199,8 +199,8 @@ graph TB
 
 ```bash
 # Clone the repository
-git clone https://github.com/auspicious27/Project6-testpurpose.git
-cd Project6-testpurpose
+git clone https://github.com/auspicious27/project6-devOps-pipeline.git
+cd project6-devOps-pipeline
 
 # Run complete setup (Ubuntu/Debian/Amazon Linux)
 chmod +x setup_prereqs.sh bootstrap_cluster.sh deploy_pipeline.sh check_env.sh
@@ -214,14 +214,15 @@ chmod +x setup_prereqs.sh bootstrap_cluster.sh deploy_pipeline.sh check_env.sh
 After running the scripts, you'll get URLs like:
 
 ```
-Flask App:       http://52.23.195.83:30080
-User Service:    http://52.23.195.83:30081/api/users
-Product Service: http://52.23.195.83:30082/api/products
-ArgoCD:          http://52.23.195.83:30083
-Gitea:           http://52.23.195.83:30084
+Flask App:       http://YOUR_IP:30080
+User Service:    http://YOUR_IP:30081/api/users
+Product Service: http://YOUR_IP:30082/api/products
+ArgoCD:          http://YOUR_IP:30083
+Gitea:           http://YOUR_IP:30084
+MinIO:           http://YOUR_IP:30085
 ```
 
-**Important:** Open ports 30080-30084 in your AWS Security Group to access from browser.
+**Important:** Open ports 30080-30085 in your AWS Security Group to access from browser.
 
 ## 📖 Detailed Setup
 
@@ -312,6 +313,7 @@ After successful installation, access your applications via **IP:PORT** (no host
 | **Product Service** | http://YOUR_IP:30082/api/products | - |
 | **ArgoCD** | http://YOUR_IP:30083 | admin/[see below] |
 | **Gitea** | http://YOUR_IP:30084 | admin/admin123 |
+| **MinIO** | http://YOUR_IP:30085 | minioadmin/minioadmin123 |
 
 ### Get ArgoCD Password
 
@@ -322,13 +324,13 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 
 ### Open AWS Security Group Ports
 
-**Required:** Open ports 30080-30084 in your AWS Security Group:
+**Required:** Open ports 30080-30085 in your AWS Security Group:
 
 1. Go to: **AWS Console → EC2 → Security Groups**
 2. Select your instance's security group
 3. **Edit Inbound Rules → Add Rule:**
    - Type: **Custom TCP**
-   - Port Range: **30080-30084**
+   - Port Range: **30080-30085**
    - Source: **0.0.0.0/0** (or your IP for security)
 4. **Save rules**
 
@@ -375,6 +377,27 @@ kubectl wait --namespace ingress-nginx \
 
 ### 2) Build and load images into the cluster
 
+**Option 1: Use local registry (Recommended - matches production workflow)**
+
+```bash
+# Build images
+docker build -t flask-app:latest ./apps/flask-app
+docker build -t user-service:latest ./apps/microservice-1
+docker build -t product-service:latest ./apps/microservice-2
+
+# Tag for local registry (port 30500)
+docker tag flask-app:latest localhost:30500/flask-app:latest
+docker tag user-service:latest localhost:30500/user-service:latest
+docker tag product-service:latest localhost:30500/product-service:latest
+
+# Push to local registry
+docker push localhost:30500/flask-app:latest
+docker push localhost:30500/user-service:latest
+docker push localhost:30500/product-service:latest
+```
+
+**Option 2: Load directly into kind (for quick testing)**
+
 ```bash
 # Flask app
 docker build -t flask-app:latest ./apps/flask-app
@@ -409,7 +432,22 @@ kubectl -n dev wait --for=condition=available --timeout=300s deployment/user-ser
 kubectl -n dev wait --for=condition=available --timeout=300s deployment/product-service
 ```
 
-### 4) Expose Flask via Ingress and add hosts entries
+### 4) Expose services via NodePort (Recommended)
+
+```bash
+# Expose Flask app on port 30080
+kubectl patch svc flask-app-service -n dev -p '{"spec":{"type":"NodePort","ports":[{"port":80,"targetPort":5000,"nodePort":30080}]}}'
+
+# Expose User service on port 30081
+kubectl patch svc user-service -n dev -p '{"spec":{"type":"NodePort","ports":[{"port":5001,"targetPort":5001,"nodePort":30081}]}}'
+
+# Expose Product service on port 30082
+kubectl patch svc product-service -n dev -p '{"spec":{"type":"NodePort","ports":[{"port":5002,"targetPort":5002,"nodePort":30082}]}}'
+
+# Access via: http://YOUR_IP:30080, http://YOUR_IP:30081, http://YOUR_IP:30082
+```
+
+**Alternative:** Expose via Ingress (requires hostname configuration)
 
 ```bash
 cat > flask-ingress.yaml << 'EOF'
@@ -448,15 +486,19 @@ fi
 ### 5) Test manually
 
 ```bash
-# App health
-curl -s http://flask-app.local/api/health | jq . || curl -s http://flask-app.local/api/health
+# Test Flask app (replace YOUR_IP with your server IP or use localhost if testing locally)
+curl -s http://YOUR_IP:30080/api/health | jq . || curl -s http://YOUR_IP:30080/api/health
 
 # Home page
-curl -I http://flask-app.local/
+curl -I http://YOUR_IP:30080/
 
 # Service-to-service endpoints (inside cluster)
 kubectl -n dev run tmp --rm -it --image=curlimages/curl -- /bin/sh -lc \
   'curl -s user-service:5001/api/users && echo && curl -s product-service:5002/api/products && echo'
+
+# Test services via NodePort (replace YOUR_IP with your server IP)
+curl http://YOUR_IP:30081/api/users
+curl http://YOUR_IP:30082/api/products
 ```
 
 Notes:
@@ -483,13 +525,18 @@ Notes:
 #### 3. Security Scan Demo
 
 ```bash
-# Scan Flask app
+# Scan Flask app (from local registry)
+trivy image --severity HIGH,CRITICAL localhost:30500/flask-app:latest
+
+# Scan User service (from local registry)
+trivy image --severity HIGH,CRITICAL localhost:30500/user-service:latest
+
+# Scan Product service (from local registry)
+trivy image --severity HIGH,CRITICAL localhost:30500/product-service:latest
+
+# Or scan locally built images
 trivy image --severity HIGH,CRITICAL flask-app:latest
-
-# Scan User service
 trivy image --severity HIGH,CRITICAL user-service:latest
-
-# Scan Product service
 trivy image --severity HIGH,CRITICAL product-service:latest
 ```
 
@@ -526,21 +573,43 @@ kubectl logs -n dev deployment/product-service
 #### Flask Web Application
 
 ```bash
-# Access via browser
-open http://flask-app.local
+# Access via browser (replace YOUR_IP with your server IP)
+# http://YOUR_IP:30080
 
 # Or via curl
-curl http://flask-app.local/api/health
+curl http://YOUR_IP:30080
+curl http://YOUR_IP:30080/api/health
 ```
 
 #### Microservices APIs
 
 ```bash
-# User service API
-curl http://user-service:5001/api/users
+# User service API (replace YOUR_IP with your server IP)
+curl http://YOUR_IP:30081/api/users
+curl http://YOUR_IP:30081/api/health
 
 # Product service API
-curl http://product-service:5002/api/products
+curl http://YOUR_IP:30082/api/products
+curl http://YOUR_IP:30082/api/health
+```
+
+#### Access Other Services
+
+```bash
+# ArgoCD UI (replace YOUR_IP with your server IP)
+# http://YOUR_IP:30083
+# Username: admin
+# Password: (get from kubectl command below)
+
+# Gitea (replace YOUR_IP with your server IP)
+# http://YOUR_IP:30084
+# Username: admin
+# Password: admin123
+
+# MinIO (replace YOUR_IP with your server IP)
+# http://YOUR_IP:30085
+# Username: minioadmin
+# Password: minioadmin123
 ```
 
 ## ✨ Features
@@ -834,7 +903,13 @@ kubectl get applications -n argocd
 argocd app sync devops-pipeline-dev --force
 
 # Cannot access ArgoCD UI
+# Option 1: Use NodePort (already configured on port 30083)
+# Access via: http://YOUR_IP:30083
+
+# Option 2: Use port-forward as fallback
 kubectl port-forward -n argocd service/argocd-server 8080:443
+
+# Then access via: https://localhost:8080
 ```
 
 ### Health Check Commands
@@ -889,8 +964,8 @@ For production deployment, consider:
 
 ```bash
 # Fork the repository
-git clone https://github.com/auspicious27/Project6-testpurpose.git
-cd Project6-testpurpose
+git clone https://github.com/auspicious27/project6-devOps-pipeline.git
+cd project6-devOps-pipeline
 
 # Create feature branch
 git checkout -b feature/new-feature
@@ -931,8 +1006,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Community
 
-- **GitHub Issues**: [Report bugs and request features](https://github.com/auspicious27/Project6-testpurpose/issues)
-- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/auspicious27/Project6-testpurpose/discussions)
+- **GitHub Issues**: [Report bugs and request features](https://github.com/auspicious27/project6-devOps-pipeline/issues)
+- **GitHub Discussions**: [Ask questions and share ideas](https://github.com/auspicious27/project6-devOps-pipeline/discussions)
 
 ---
 

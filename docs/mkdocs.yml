@@ -1,8 +1,8 @@
 site_name: DevOps Pipeline Documentation
 site_description: Unified Production-Ready DevOps Pipeline Documentation
 site_url: https://your-org.github.io/devops-pipeline
-repo_url: https://github.com/your-org/devops-pipeline
-repo_name: your-org/devops-pipeline
+repo_url: https://github.com/auspicious27/project6-devOps-pipeline
+repo_name: auspicious27/project6-devOps-pipeline
 
 theme:
   name: material

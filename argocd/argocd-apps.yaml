@@ -8,7 +8,7 @@ metadata:
 spec:
   project: devops-pipeline-project
   source:
-    repoURL: https://github.com/auspicious27/Project6-testpurpose.git
+    repoURL: https://github.com/auspicious27/project6-devOps-pipeline.git
     targetRevision: HEAD
     path: environments/dev
   destination:
@@ -34,7 +34,7 @@ metadata:
 spec:
   project: devops-pipeline-project
   source:
-    repoURL: https://github.com/auspicious27/Project6-testpurpose.git
+    repoURL: https://github.com/auspicious27/project6-devOps-pipeline.git
     targetRevision: HEAD
     path: environments/staging
   destination:
@@ -60,7 +60,7 @@ metadata:
 spec:
   project: devops-pipeline-project
   source:
-    repoURL: https://github.com/auspicious27/Project6-testpurpose.git
+    repoURL: https://github.com/auspicious27/project6-devOps-pipeline.git
     targetRevision: HEAD
     path: environments/prod
   destination:
@@ -86,7 +86,7 @@ metadata:
 spec:
   project: devops-pipeline-project
   source:
-    repoURL: https://github.com/auspicious27/Project6-testpurpose.git
+    repoURL: https://github.com/auspicious27/project6-devOps-pipeline.git
     targetRevision: HEAD
     path: environments/blue-green
   destination:

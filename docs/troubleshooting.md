@@ -656,8 +656,8 @@ A: Check Velero status, MinIO connection, and backup configuration.
 - [Runbooks](runbooks/)
 
 ### Community Support
-- [GitHub Issues](https://github.com/your-org/devops-pipeline/issues)
-- [GitHub Discussions](https://github.com/your-org/devops-pipeline/discussions)
+- [GitHub Issues](https://github.com/auspicious27/project6-devOps-pipeline/issues)
+- [GitHub Discussions](https://github.com/auspicious27/project6-devOps-pipeline/discussions)
 
 ### Professional Support
 - Contact your DevOps team
